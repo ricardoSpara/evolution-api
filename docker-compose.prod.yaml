@@ -6,17 +6,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: evolution
     restart: unless-stopped
     depends_on:
-      postgres:
+      evolution-postgres:
         condition: service_healthy
-      redis:
+      evolution-redis:
         condition: service_started
     environment:
       DATABASE_ENABLED: "true"
       DATABASE_PROVIDER: postgresql
-      DATABASE_CONNECTION_URI: postgresql://evolution:${EVO_POSTGRES_PASSWORD}@postgres:5432/evolution
+      DATABASE_CONNECTION_URI: postgresql://evolution:${EVO_POSTGRES_PASSWORD}@evolution-postgres:5432/evolution
       DATABASE_CONNECTION_CLIENT_NAME: ${EVO_DATABASE_CLIENT_NAME:-evolution_local}
       DATABASE_SAVE_DATA_INSTANCE: "true"
       DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
@@ -25,7 +24,7 @@ services:
       DATABASE_SAVE_DATA_CHATS: "true"
       DATABASE_SAVE_DATA_HISTORIC: "true"
       CACHE_REDIS_ENABLED: "true"
-      CACHE_REDIS_URI: redis://redis:6379/${EVO_REDIS_DB:-1}
+      CACHE_REDIS_URI: redis://evolution-redis:6379/${EVO_REDIS_DB:-1}
       CACHE_REDIS_PREFIX_KEY: ${EVO_REDIS_PREFIX:-evolution_local}
       CACHE_REDIS_SAVE_INSTANCES: ${EVO_CACHE_REDIS_SAVE_INSTANCES:-true}
       CACHE_LOCAL_ENABLED: "false"
@@ -47,9 +46,8 @@ services:
       start_period: 60s
     networks: [default, internal]
 
-  postgres:
+  evolution-postgres:
     image: postgres:16-alpine
-    container_name: evolution-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: evolution
@@ -64,9 +62,8 @@ services:
       retries: 10
     networks: [default]
 
-  redis:
+  evolution-redis:
     image: redis:7-alpine
-    container_name: evolution-redis
     restart: unless-stopped
     command: ["redis-server", "--save", "60", "1"]
     volumes:
