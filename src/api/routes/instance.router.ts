@@ -57,11 +57,17 @@ export class InstanceRouter extends RouterBroker {
       .get(this.routerPath('fetchInstances', false), ...guards, async (req, res) => {
         const key = req.get('apikey');
 
+        // dataValidate strips instanceId/instanceName from the query as protected fields.
+        // This route has no :instanceName param, so pass the read-only filters explicitly.
+        const instanceId = typeof req.query.instanceId === 'string' ? req.query.instanceId : undefined;
+        const instanceName = typeof req.query.instanceName === 'string' ? req.query.instanceName : undefined;
+        const number = typeof req.query.number === 'string' ? req.query.number : undefined;
+
         const response = await this.dataValidate<InstanceDto>({
           request: req,
           schema: null,
           ClassRef: InstanceDto,
-          execute: (instance) => instanceController.fetchInstances(instance, key),
+          execute: (instance) => instanceController.fetchInstances({ ...instance, instanceId, instanceName, number }, key),
         });
 
         return res.status(HttpStatus.OK).json(response);
